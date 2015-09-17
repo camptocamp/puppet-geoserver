@@ -31,75 +31,55 @@ define geoserver::worker(
   }
 
   $connector_scheme = $::geoserver::ssl_only ? {
-      true  => 'https',
-      false => 'http',
+    true  => 'https',
+    false => 'http',
   }
 
   include ::java
   include ::tomcat
 
-  ensure_resource(
-    'tomcat::instance',
-    $name,
-    {
-      ensure             => present,
-      default_connectors => false,
-      manage             => true,
-      server_port        => $server_port,
-      setenv             => concat( $common_env, $gwc_env ),
-    }
-  )
+  tomcat::instance { $name:
+    ensure             => present,
+    default_connectors => false,
+    manage             => true,
+    server_port        => $server_port,
+    setenv             => concat( $common_env, $gwc_env ),
+  }
 
-  ensure_resource(
-    'tomcat::connector',
-    "http-${connector_port}-${name}",
-    {
-      ensure   => present,
-      instance => $name,
-      manage   => true,
-      options  => [ 'minSpareThreads="20"' ],
-      port     => $connector_port,
-      protocol => 'HTTP/1.1',
-      scheme   => $connector_scheme,
-    }
-  )
+  tomcat::connector { "http-${connector_port}-${name}":
+    ensure   => present,
+    instance => $name,
+    manage   => true,
+    options  => [ 'minSpareThreads="20"' ],
+    port     => $connector_port,
+    protocol => 'HTTP/1.1',
+    scheme   => $connector_scheme,
+  }
 
-  ensure_resource(
-    'exec',
-    'Create truststore dir',
-    {
-      command => "/bin/mkdir -p `dirname ${::geoserver::truststorefile}`",
-      creates => join(
-        delete_at(split($::geoserver::truststorefile, '/'),
-        size(split($::geoserver::truststorefile, '/')) - 1), '/'),
-    }
-  )
+  exec { 'Create truststore dir':
+    command => "/bin/mkdir -p `dirname ${::geoserver::truststorefile}`",
+    creates => join(
+      delete_at(split($::geoserver::truststorefile, '/'),
+      size(split($::geoserver::truststorefile, '/')) - 1), '/'),
+  }
 
-  ensure_resource(
-    'exec',
-    'Import default truststore',
-    {
-      command => "/usr/bin/keytool -importkeystore -srckeystore /etc/ssl/certs/java/cacerts -destkeystore ${::geoserver::truststorefile} -srcstorepass changeit -deststorepass ${::geoserver::truststorepass}",
-      creates => $::geoserver::truststorefile,
-      require => [
-        Exec['Create truststore dir'],
-        Class['java'],
-      ],
-    }
-  )
+  exec { 'Import default truststore':
+    command => "/usr/bin/keytool -importkeystore -srckeystore /etc/ssl/certs/java/cacerts -destkeystore ${::geoserver::truststorefile} -srcstorepass changeit -deststorepass ${::geoserver::truststorepass}",
+    creates => $::geoserver::truststorefile,
+    require => [
+      Exec['Create truststore dir'],
+      Class['java'],
+    ],
+  }
 
-  ensure_resource(
-    'java_ks',
-    'geoserver:truststore',
-    {
-      ensure       => present,
-      certificate  => '/var/lib/puppet/ssl/certs/ca.pem',
-      target       => $::geoserver::truststorefile,
-      password     => $::geoserver::truststorepass,
-      trustcacerts => true,
-      require      => Exec['Import default truststore'],
-    }
-  )
+  java_ks { 'geoserver:truststore':
+    ensure       => present,
+    certificate  => '/var/lib/puppet/ssl/certs/ca.pem',
+    target       => $::geoserver::truststorefile,
+    password     => $::geoserver::truststorepass,
+    trustcacerts => true,
+    require      => Exec['Import default truststore'],
+  }
 
   exec { "Create ${name} GEOSERVER_DATA_DIR":
     command => "/bin/mkdir -p `dirname ${data_dir}`",
@@ -107,20 +87,20 @@ define geoserver::worker(
     before  => File[$data_dir],
   }
 
-  ensure_resource(
-    'file',
-    $data_dir,
-    {
-      ensure => directory,
-      owner  => 'tomcat',
-      group  => 'tomcat',
-      mode   => '0755',
-    }
-  )
+  file { $data_dir:
+    ensure => directory,
+    owner  => 'tomcat',
+    group  => 'tomcat',
+    mode   => '0755',
+  }
 
   if $::osfamily == 'Debian' and versioncmp($::operatingsystemmajrelease, '7') >= 0 {
-    ensure_packages( [ 'libgdal-java', ] )
+    package { 'libgdal-java':
+      ensure => present,
+    }
   }
-  ensure_packages( [ 'ttf-mscorefonts-installer', ])
+  package { 'ttf-mscorefonts-installer':
+    ensure => present,
+  }
 
 }

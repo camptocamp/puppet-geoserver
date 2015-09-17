@@ -13,7 +13,10 @@ class geoserver(
   $truststorefile       = '/srv/tomcat/ssl/georchestra.ts',
   $truststorepass       = 'GeoServer',
 ) {
-  ensure_packages( [ 'libjai-imageio-core-java', ] )
+  package { 'libjai-imageio-core-java':
+    ensure => present,
+  }
+
   $last_worker = $workers - 1
   $server_names = range(
     "${server_name}0",
@@ -38,23 +41,15 @@ class geoserver(
   }
 
   if $embedded_geowebcache {
-    ensure_resource(
-      'exec',
-      "/bin/mkdir -p `dirname ${cache_dir}`",
-      {
-        'unless' => "/usr/bin/test -d `dirname ${cache_dir}`",
-        before   => File[$cache_dir],
-      }
-    )
-    ensure_resource(
-      'file',
-      $cache_dir,
-      {
-        ensure => directory,
-        owner  => 'tomcat',
-        group  => 'tomcat',
-        mode   => '0755',
-      }
-    )
+    exec { "/bin/mkdir -p `dirname ${cache_dir}`":
+      unless => "/usr/bin/test -d `dirname ${cache_dir}`",
+      before => File[$cache_dir],
+    }
+    file { $cache_dir:
+      ensure => directory,
+      owner  => 'tomcat',
+      group  => 'tomcat',
+      mode   => '0755',
+    }
   }
 }
