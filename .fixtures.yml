@@ -1,0 +1,14 @@
+---
+fixtures:
+  forge_modules:
+    archive: 'camptocamp-archive'
+    augeasproviders_core: 'herculesteam-augeasproviders_core'
+    augeasproviders_shellvar: 'herculesteam-augeasproviders_shellvar'
+    concat: 'puppetlabs-concat'
+    java: 'puppetlabs-java'
+    java_ks: 'puppetlabs-java_ks'
+    stdlib: 'puppetlabs-stdlib'
+    systemd: 'camptocamp-systemd'
+    tomcat: 'camptocamp-tomcat'
+  symlinks:
+    geoserver: "#{source_dir}"
