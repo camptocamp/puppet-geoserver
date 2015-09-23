@@ -6,6 +6,7 @@ class geoserver(
   $address             = $::fqdn,
   $data_dir            = undef,
   $cache_dir           = undef,
+  $java_opts           = undef,
   $java_xms            = '2G',
   $java_xmx            = '2G',
   $java_xx_maxpermsize = '256m',
@@ -63,6 +64,7 @@ class geoserver(
     manage             => true,
     server_port        => $server_port,
     setenv             => concat( $common_env, $data_dir_env, $cache_dir_env ),
+    java_opts          => $java_opts,
   }
 
   tomcat::connector { "${connector_scheme}-${connector_port}-${name}":
