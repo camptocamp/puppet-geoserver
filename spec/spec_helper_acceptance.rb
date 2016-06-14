@@ -10,11 +10,7 @@ hosts.each do |host|
     end
   end
 
-  if ENV['PUPPET_AIO']
-    install_puppet_agent_on host, {}
-  else
-    install_puppet_on host
-  end
+  install_puppet_agent_on host, {}
 
   # Generate certificates for keystore
   on host, "puppet cert generate $(facter fqdn)"
