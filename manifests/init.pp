@@ -81,13 +81,13 @@ class geoserver(
     exec { 'Create truststore dir':
       command => "/bin/mkdir -p `dirname ${truststorefile}`",
       unless  => "/usr/bin/test -d `dirname ${truststorefile}`",
-    } ->
-    exec { 'Import default truststore':
+    }
+    -> exec { 'Import default truststore':
       command => "/usr/bin/keytool -importkeystore -srckeystore /etc/ssl/certs/java/cacerts -destkeystore ${truststorefile} -srcstorepass changeit -deststorepass ${truststorepass}",
       creates => $truststorefile,
       require => Class['java'],
-    } ->
-    java_ks { 'geoserver:truststore':
+    }
+    -> java_ks { 'geoserver:truststore':
       ensure       => present,
       certificate  => '/var/lib/puppet/ssl/certs/ca.pem',
       target       => $truststorefile,
@@ -100,8 +100,8 @@ class geoserver(
     exec { "Create ${name} GEOSERVER_DATA_DIR":
       command => "/bin/mkdir -p `dirname ${data_dir}`",
       unless  => "/usr/bin/test -d `dirname ${data_dir}`",
-    } ->
-    file { $data_dir:
+    }
+    -> file { $data_dir:
       ensure => directory,
       owner  => 'tomcat',
       group  => 'tomcat',
